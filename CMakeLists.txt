@@ -1,30 +1,27 @@
-cmake_minimum_required(VERSION 4.2.3)
-project(rpgGame LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.10)
+project(rpgGame VERSION 0.1 LANGUAGES CXX)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Use a sensible C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
-set(LIB_DIR "${CMAKE_SOURCE_DIR}/lib")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Ensure build outputs go into the binary dir (useful for out-of-source builds)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+# Collect source files
+file(GLOB_RECURSE ENEMY_SOURCES "${CMAKE_SOURCE_DIR}/src/Enemies/*.cpp")
+file(GLOB_RECURSE WEAPON_SOURCES "${CMAKE_SOURCE_DIR}/src/Weapons/*.cpp")
+file(GLOB_RECURSE CORE_SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
-add_library(gameCore
-  ${SRC_DIR}/Character.cpp
-  ${SRC_DIR}/Weapon.cpp
-  ${SRC_DIR}/Enemy.cpp
-)
+add_library(Enemies STATIC ${ENEMY_SOURCES})
+add_library(Weapons STATIC ${WEAPON_SOURCES})
+add_library(GameCore STATIC ${CORE_SOURCES})
 
-target_include_directories(gameCore
-  PUBLIC ${LIB_DIR}
-)
+add_library(rpg_includes INTERFACE)
+target_include_directories(rpg_includes INTERFACE "${CMAKE_SOURCE_DIR}/lib")
 
-add_executable(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/main.cpp)
+target_link_libraries(Enemies PUBLIC rpg_includes)
+target_link_libraries(Weapons PUBLIC rpg_includes)
+target_link_libraries(GameCore PUBLIC rpg_includes)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE gameCore)
+add_executable(rpgGame "${CMAKE_SOURCE_DIR}/main.cpp")
+
+target_link_libraries(rpgGame PRIVATE Enemies Weapons GameCore rpg_includes)
