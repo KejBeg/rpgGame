@@ -8,6 +8,7 @@
  * @brief Unarmed weapon type (fists, basic melee) derived from Weapon.
  */
 class UnarmedWeapon : public Weapon {
+  using Weapon::Weapon;
 };
 
 #endif // UNARMEDWEAPON_H

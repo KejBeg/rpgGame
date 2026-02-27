@@ -1,26 +1,30 @@
 #include "Enemies/Enemy.h"
 #include "Character.h"
+#include "Weapons/UnarmedWeapon.h"
 #include <algorithm>
 #include <iostream>
 
-
-Enemy::Enemy(std::string name, int health, int bottlecaps, const Weapon &weapon)
-    : name(std::move(name)), health(std::max(0, health)), bottlecaps(std::max(0, bottlecaps)),
-      currentWeapon(weapon) {}
+Enemy::Enemy(std::string name, uint16_t maxHealth, uint16_t bottlecaps)
+    : name(std::move(name)), health(maxHealth), maxHealth(maxHealth),
+      bottlecaps(bottlecaps), currentWeapon(UnarmedWeapon("Fists", 1, 100, 1)) {
+}
 
 const std::string &Enemy::getName() const { return name; }
-int Enemy::getHealth() const { return health; }
-int Enemy::getBottlecaps() const { return bottlecaps; }
+uint16_t Enemy::getHealth() const { return health; }
+uint16_t Enemy::getBottlecaps() const { return bottlecaps; }
+uint16_t Enemy::getMaxHealth() const { return maxHealth; }
 const Weapon &Enemy::getCurrentWeapon() const { return currentWeapon; }
 Weapon &Enemy::getCurrentWeapon() { return currentWeapon; }
 
 void Enemy::setName(const std::string &name) { this->name = name; }
 
-void Enemy::setHealth(int health) { this->health = std::max(0, health); }
+void Enemy::setHealth(uint16_t health) { this->health = health; }
 
-void Enemy::setBottlecaps(int bottlecaps) {
-  this->bottlecaps = std::max(0, bottlecaps);
+void Enemy::setBottlecaps(uint16_t bottlecaps) {
+  this->bottlecaps = bottlecaps;
 }
+
+void Enemy::setMaxHealth(uint16_t maxHealth) { this->maxHealth = maxHealth; }
 
 void Enemy::setCurrentWeapon(const Weapon &weapon) {
   this->currentWeapon = weapon;
@@ -43,6 +47,8 @@ void Enemy::attack(Character &character) {
 }
 
 void Enemy::takeDamage(uint16_t damage) {
-  // Use setter to enforce clamping and ownership rules.
-  setHealth(this->health - static_cast<int>(damage));
+  int newHealth = static_cast<int>(this->health) - static_cast<int>(damage);
+  if (newHealth < 0)
+    newHealth = 0;
+  setHealth(static_cast<uint16_t>(newHealth));
 }

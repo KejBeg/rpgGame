@@ -8,6 +8,7 @@
  * @brief Melee weapon base class for close-range weapons.
  */
 class MeleeWeapon : public Weapon {
+  using Weapon::Weapon;
 };
 
 #endif // MELEEWEAPON_H

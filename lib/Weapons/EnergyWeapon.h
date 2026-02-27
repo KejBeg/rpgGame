@@ -8,6 +8,7 @@
  * @brief EnergyWeapon base class for energy-based weapons.
  */
 class EnergyWeapon : public Weapon {
+  using Weapon::Weapon;
 };
 
 #endif // ENERGYWEAPON_H

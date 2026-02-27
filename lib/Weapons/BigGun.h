@@ -7,7 +7,8 @@
 /**
  * @brief BigGuns weapon category for heavy firearms.
  */
-class BigGuns : public Weapon {
+class BigGun : public Weapon {
+  using Weapon::Weapon;
 };
 
 #endif // BIGGUNS_H
