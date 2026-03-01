@@ -7,15 +7,15 @@
 #include "Weapons/MeleeWeapon.h"
 #include "Weapons/SmallGun.h"
 #include "Weapons/UnarmedWeapon.h"
+#include <algorithm>
+#include <cctype>
 #include <cstdlib>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <memory>
-#include <vector>
-#include <fstream>
 #include <sstream>
-#include <algorithm>
-#include <cctype>
+#include <vector>
 
 // Clear regardless of system
 #ifdef _WIN32
@@ -37,7 +37,6 @@ void createEnemies(std::vector<std::unique_ptr<Enemy>> &allEnemies) {
   allEnemies.push_back(std::make_unique<Ghoul>("Ghoul", 80, 15));
   allEnemies.push_back(std::make_unique<SuperMutant>("Super Mutant", 150, 30));
 }
-
 
 /**
  * @brief Display the stats of both the character and the enemy in a formatted
@@ -89,7 +88,8 @@ void DisplayCombatantsStats(const Character &character, const Enemy &enemy) {
   std::cout << "\n\n";
 }
 
-bool loadWeaponFile(const std::string &filename, std::vector<Weapon> &allWeapons) {
+bool loadWeaponFile(const std::string &filename,
+                    std::vector<Weapon> &allWeapons) {
   std::ifstream weaponFile(filename);
   if (!weaponFile.is_open()) {
     std::cerr << "Error opening weapon file: " << filename << std::endl;
@@ -99,34 +99,40 @@ bool loadWeaponFile(const std::string &filename, std::vector<Weapon> &allWeapons
   // for each line in the file, parse the weapon data and create a Weapon object
   std::string line;
   while (std::getline(weaponFile, line)) {
-    if (line.empty()) continue;           
-    if (line.front() == '#') continue;
+    if (line.empty())
+      continue;
+    if (line.front() == '#')
+      continue;
 
     std::istringstream iss(line);
     std::string token;
 
-    if (!std::getline(iss, token, ',')) continue;
+    if (!std::getline(iss, token, ','))
+      continue;
     uint16_t id = static_cast<uint16_t>(std::stoi(token));
 
-    if (!std::getline(iss, token, ',')) continue;
+    if (!std::getline(iss, token, ','))
+      continue;
     std::string name = token;
 
-    if (!std::getline(iss, token, ',')) continue;
+    if (!std::getline(iss, token, ','))
+      continue;
     uint16_t damage = static_cast<uint16_t>(std::stoi(token));
 
-    if (!std::getline(iss, token, ',')) continue;
+    if (!std::getline(iss, token, ','))
+      continue;
     uint8_t hitChance = static_cast<uint8_t>(std::stoi(token));
 
-    if (!std::getline(iss, token, ',')) continue;
+    if (!std::getline(iss, token, ','))
+      continue;
     uint8_t hitReps = static_cast<uint8_t>(std::stoi(token));
 
-    // Construct and store the weapon 
+    // Construct and store the weapon
     allWeapons.emplace_back(id, name, damage, hitChance, hitReps);
   }
 
   return true;
 }
-
 
 int main() {
   bool isRunning = true;
@@ -139,15 +145,23 @@ int main() {
 
   // Weapons
   std::vector<Weapon> allWeapons;
-  loadWeaponFile("weapons.csv", allWeapons);
+  loadWeaponFile("data/weapons.csv", allWeapons);
 
   // Enemies
   std::vector<std::unique_ptr<Enemy>> allEnemies;
   createEnemies(allEnemies);
 
+  // For each enemy, get a random weapon
+  for (auto &enemy : allEnemies) {
+    enemy->setCurrentWeapon(allWeapons[rand() % allWeapons.size()]);
+  }
+
   // Main character
   Character mainCharacter =
       Character("Unknown", 100, 0, {allWeapons[rand() % allWeapons.size()]});
+
+  // Battle log for the current fight (stores human-readable lines)
+  std::vector<std::string> currentBattleLog;
 
   while (isRunning) {
     while (isMenuRunning) {
@@ -195,17 +209,33 @@ int main() {
       }
     }
 
+    // pointer to the current enemy; we reselect when it's nullptr or after removal
+    Enemy *currentEnemy = nullptr;
+
     while (isGameRunning) {
       system(CLEAR_COMMAND);
 
       std::cout << "Welcome, " << mainCharacter.getName() << "!" << std::endl;
 
       // Randomly select an enemy to encounter
-      Enemy &currentEnemy = *allEnemies[rand() % allEnemies.size()];
-      std::cout << "You encounter a " << currentEnemy.getType() << " named "
-                << currentEnemy.getName() << "!" << std::endl;
+      // ensure we have a valid enemy selected for this encounter
+      if (!currentEnemy) {
+        currentEnemy = allEnemies[rand() % allEnemies.size()].get();
+      }
 
-      DisplayCombatantsStats(mainCharacter, currentEnemy);
+      std::cout << "You encounter a " << currentEnemy->getType() << " named "
+                << currentEnemy->getName() << "!" << std::endl;
+
+      DisplayCombatantsStats(mainCharacter, *currentEnemy);
+
+      // Print the current battle log each loop so the player can see history
+      if (!currentBattleLog.empty()) {
+        std::cout << "=== Battle Log ===" << std::endl;
+        for (const auto &line : currentBattleLog) {
+          std::cout << line;
+        }
+        std::cout << std::endl;
+      }
 
       std::cout << "What is your move?" << std::endl;
       std::cout << "1. Attack" << std::endl;
@@ -213,23 +243,68 @@ int main() {
       std::cout << "Enter your choice: ";
       std::cin >> gameChoice;
 
-      switch (gameChoice) {
-      case 1:
-          mainCharacter.attack(currentEnemy, mainCharacter.getWeaponList().front());
-          if (currentEnemy.getHealth() == 0) {
-              std::cout << "You defeated the " << currentEnemy.getType() << " "
-                        << currentEnemy.getName() << "!" << std::endl;
-  
-          }
-        break;
-      case 2:
-        break;
-      default:
-        std::cout << "Invalid choice. Please try again." << std::endl;
-        break;
-      }
+        switch (gameChoice) {
+        case 1:
+          mainCharacter.attack(*currentEnemy,
+                               mainCharacter.getWeaponList().front(),
+                               &currentBattleLog);
+          if (currentEnemy->getHealth() == 0) {
+            std::cout << "You defeated the " << currentEnemy->getType() << " "
+                      << currentEnemy->getName() << "!" << std::endl;
 
-      std::cin >> gameChoice;
+          // Remove enemy from cirtulation
+          allEnemies.erase(
+              std::remove_if(
+                  allEnemies.begin(), allEnemies.end(),
+                  [currentEnemy](const std::unique_ptr<Enemy> &enemy) {
+                    return enemy.get() == currentEnemy;
+                  }),
+              allEnemies.end());
+
+           // Choose a new enemy
+           if (allEnemies.empty()) {
+             std::cout << "Congratulations! You have defeated all enemies!"
+                       << std::endl;
+
+            isGameRunning = false;
+            isRunning = false;
+            break;
+           }
+
+           currentBattleLog.clear();
+
+           // pick a new enemy (reset pointer first to avoid using dangling ptr)
+           if (allEnemies.empty()) {
+             currentEnemy = nullptr;
+           } else {
+             currentEnemy = allEnemies[rand() % allEnemies.size()].get();
+           }
+        }
+
+        if (currentEnemy) currentEnemy->attack(mainCharacter, &currentBattleLog);
+
+        // If the main character is defeated, end the game
+        if (mainCharacter.getHealth() == 0) {
+          if (currentEnemy) {
+            std::cout << "You have been defeated by the " << currentEnemy->getType()
+                      << " " << currentEnemy->getName() << "!" << std::endl;
+          } else {
+            std::cout << "You have been defeated by an enemy!" << std::endl;
+          }
+          std::cout << "Game Over!" << std::endl;
+
+          isGameRunning = false;
+          isRunning = false;
+        }
+
+        break;
+        case 2:
+          break;
+        default:
+          std::cout << "Invalid choice. Please try again." << std::endl;
+          break;
+        }
+
     }
   }
 

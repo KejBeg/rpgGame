@@ -25,3 +25,9 @@ target_link_libraries(GameCore PUBLIC rpg_includes)
 add_executable(rpgGame "${CMAKE_SOURCE_DIR}/main.cpp")
 
 target_link_libraries(rpgGame PRIVATE Enemies Weapons GameCore rpg_includes)
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/data")
+  file(COPY "${CMAKE_SOURCE_DIR}/data" DESTINATION "${CMAKE_BINARY_DIR}")
+else()
+  message(WARNING "data/ directory not found in source tree; skipping copy")
+endif()

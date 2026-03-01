@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <list>
 #include <string>
+#include <vector>
 
 class Enemy; // forward declare to avoid circular include
 
@@ -105,13 +106,14 @@ public:
    * @param enemy The enemy to attack (may be modified).
    * @param weapon The weapon used for the attack (read-only reference).
    */
-  void attack(Enemy &enemy, const Weapon &weapon);
+   void attack(Enemy &enemy, const Weapon &weapon,
+               std::vector<std::string> *battleLog = nullptr);
 
   /**
    * @brief Apply damage to this character, reducing health.
    * @param damage Amount of damage to apply (non-negative).
    */
-  void takeDamage(uint16_t damage);
+   void takeDamage(uint16_t damage);
 
 };
 

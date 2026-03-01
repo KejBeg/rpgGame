@@ -3,10 +3,12 @@
 #include "Weapons/UnarmedWeapon.h"
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <vector>
 
 Enemy::Enemy(std::string name, uint16_t maxHealth, uint16_t bottlecaps)
     : name(std::move(name)), health(maxHealth), maxHealth(maxHealth),
-      bottlecaps(bottlecaps), currentWeapon(UnarmedWeapon("Fists", 1, 100, 1)) {
+      bottlecaps(bottlecaps), currentWeapon(UnarmedWeapon(0, "Fists", 1, 100, 1)) {
 }
 
 const std::string &Enemy::getName() const { return name; }
@@ -30,7 +32,7 @@ void Enemy::setCurrentWeapon(const Weapon &weapon) {
   this->currentWeapon = weapon;
 }
 
-void Enemy::attack(Character &character) {
+void Enemy::attack(Character &character, std::vector<std::string> *battleLog) {
   uint16_t totalDamage = 0;
 
   for (int i = 0; i < currentWeapon.getHitReps(); i++) {
@@ -41,14 +43,19 @@ void Enemy::attack(Character &character) {
 
   character.takeDamage(totalDamage);
 
-  std::cout << this->getType() << " " << this->name << " attacks "
-            << character.getName() << " with " << currentWeapon.getName()
-            << " for " << totalDamage << " damage!" << std::endl;
+  // Log the attack details
+  std::ostringstream ss;
+  ss << this->getType() << " " << this->name << " attacks "
+     << character.getName() << " with " << currentWeapon.getName() << " for "
+     << totalDamage << " damage!" << " " << character.getName()
+     << " current health: " << character.getHealth() << "/" << character.getMaxHealth() << "." << std::endl;
+
+  battleLog->push_back(ss.str());
 }
 
 void Enemy::takeDamage(uint16_t damage) {
-  int newHealth = static_cast<int>(this->health) - static_cast<int>(damage);
+  uint16_t newHealth = this->health - damage;
   if (newHealth < 0)
     newHealth = 0;
-  setHealth(static_cast<uint16_t>(newHealth));
+  setHealth(newHealth);
 }

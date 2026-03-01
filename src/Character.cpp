@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
+#include <vector>
 
 Character::Character(std::string name, uint16_t maxHealth, uint16_t bottlecaps,
                      std::list<Weapon> weaponList) {
@@ -29,22 +31,26 @@ void Character::setHealth(uint16_t health) {
     this->health = health;
   }
 }
-void Character::setBottlecaps(uint16_t bottlecaps) { this->bottlecaps = bottlecaps; }
+void Character::setBottlecaps(uint16_t bottlecaps) {
+  this->bottlecaps = bottlecaps;
+}
 
-void Character::setMaxHealth(uint16_t maxHealth) { this->maxHealth = maxHealth; }
+void Character::setMaxHealth(uint16_t maxHealth) {
+  this->maxHealth = maxHealth;
+}
 void Character::setWeaponList(const std::list<Weapon> &weaponList) {
   this->weaponList = weaponList;
 }
 
 void Character::takeDamage(uint16_t damage) {
-  int newHealth = static_cast<int>(health) - static_cast<int>(damage);
-  if (newHealth < 0) newHealth = 0;
-  setHealth(static_cast<uint16_t>(newHealth));
-  std::cout << name << " takes " << damage
-            << " damage! Current health: " << health << std::endl;
+  uint16_t newHealth = this->health - damage;
+  if (newHealth < 0)
+    newHealth = 0;
+  setHealth(newHealth);
 }
 
-void Character::attack(Enemy &enemy, const Weapon &weapon) {
+void Character::attack(Enemy &enemy, const Weapon &weapon,
+                       std::vector<std::string> *battleLog) {
   uint16_t totalDamage = 0;
 
   for (int i = 0; i < weapon.getHitReps(); i++) {
@@ -55,8 +61,9 @@ void Character::attack(Enemy &enemy, const Weapon &weapon) {
 
   enemy.takeDamage(totalDamage);
 
-  std::cout << this->name << " attacks " << enemy.getType() << " "
-            << enemy.getName() << " with " << weapon.getName() << " for "
-            << totalDamage << " damage!" << std::endl;
-}
+  std::ostringstream ss;
+  ss << this->name << " attacks " << enemy.getType() << " " << enemy.getName()
+     << " with " << weapon.getName() << " for " << totalDamage << " damage!" << " " << enemy.getName() << " current health: " << enemy.getHealth() << "/" << enemy.getMaxHealth() << "." << std::endl;
 
+  battleLog->push_back(ss.str());
+}

@@ -4,6 +4,7 @@
 #include "Weapons/Weapon.h"
 #include <cstdint>
 #include <string>
+#include <vector>
 
 class Character;
 
@@ -105,7 +106,7 @@ public:
    * @brief Perform an attack against a character.
    * @param character The character to attack (may be modified).
    */
-  void attack(Character &character);
+  void attack(Character &character, std::vector<std::string> *battleLog = nullptr);
 
   /**
    * @brief Get the type of the enemy (e.g., "Ghoul", "SuperMutant", "Raider").
