@@ -59,3 +59,4 @@ void Character::attack(Enemy &enemy, const Weapon &weapon) {
             << enemy.getName() << " with " << weapon.getName() << " for "
             << totalDamage << " damage!" << std::endl;
 }
+

@@ -112,6 +112,7 @@ public:
    * @param damage Amount of damage to apply (non-negative).
    */
   void takeDamage(uint16_t damage);
+
 };
 
 #endif // !CHARACTER_H

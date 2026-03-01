@@ -1,13 +1,14 @@
 #include "Weapon.h"
 #include <utility>
 
-Weapon::Weapon(std::string name, uint16_t damage, uint8_t hitChance, uint8_t hitReps){
+Weapon::Weapon(uint16_t id, std::string name, uint16_t damage, uint8_t hitChance,
+               uint8_t hitReps) {
+  this->id = id;
   this->name = std::move(name);
   this->damage = damage;
   this->hitChance = hitChance;
   this->hitReps = hitReps;
 }
-
 
 std::string Weapon::getName() const { return name; }
 
@@ -24,3 +25,4 @@ void Weapon::setDamage(uint16_t damage) { this->damage = damage; }
 void Weapon::setHitChance(uint8_t hitChance) { this->hitChance = hitChance; }
 
 void Weapon::setHitReps(uint8_t hitReps) { this->hitReps = hitReps; }
+

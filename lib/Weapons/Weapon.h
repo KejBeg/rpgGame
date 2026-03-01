@@ -7,6 +7,7 @@
 
 class Weapon {
 private:
+  uint16_t id;
   std::string name;
   uint16_t damage;
   uint8_t hitChance;
@@ -68,7 +69,10 @@ public:
    * @param hitChance Hit chance value.
    * @param hitReps Number of hit repetitions.
    */
+  Weapon(uint16_t id, std::string name, uint16_t damage, uint8_t hitChance, uint8_t hitReps);
+  // Backwards-compatible constructor (no id) — assigns id = 0
   Weapon(std::string name, uint16_t damage, uint8_t hitChance, uint8_t hitReps);
+
 };
 
 #endif // !WEAPON_H
