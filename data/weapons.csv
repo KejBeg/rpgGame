@@ -1,2 +1,6 @@
 # WeaponType, id, name, damage, hitChance, hitReps
 SmallGun,0,9mm Pistol,10,70,1
+BigGun,1,FatMan,100,50,1
+EnergyWeapon,2,Plasma Rifle,25,80,1
+MeleeWeapon,3,Broad Machete,15,90,1
+

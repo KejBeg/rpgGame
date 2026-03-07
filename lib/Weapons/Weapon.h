@@ -4,7 +4,12 @@
 #include <cstdint>
 #include <string>
 
-
+/**
+ * @brief Represents a weapon that can be used by characters in the game.
+ *
+ * Each weapon has a unique ID, name, damage value, hit chance, and number of
+ * hit repetitions.
+ */
 class Weapon {
 private:
   uint16_t id;
@@ -14,6 +19,37 @@ private:
   uint8_t hitReps;
 
 public:
+  ////////////////////
+  /// Constructors ///
+  ////////////////////
+
+  /**
+   * @brief Construct a new Weapon instance.
+   * @param name Weapon name.
+   * @param damage Damage amount.
+   * @param hitChance Hit chance value.
+   * @param hitReps Number of hit repetitions.
+   */
+  Weapon(uint16_t id, std::string name, uint16_t damage, uint8_t hitChance,
+         uint8_t hitReps);
+
+  /**
+   * @brief Construct a new Weapon with default values.
+   */
+  Weapon();
+
+  virtual ~Weapon() = default;
+
+  ///////////////
+  /// Getters ///
+  ///////////////
+
+  /**
+   * @brief Get the weapon's unique identifier.
+   * @return uint16_t Weapon ID.
+   */
+  uint16_t getId() const;
+
   /**
    * @brief Get the weapon's name.
    * @return std::string Weapon name.
@@ -37,6 +73,16 @@ public:
    * @return uint8_t Hit repetitions.
    */
   uint8_t getHitReps() const;
+
+  ///////////////
+  /// Setters ///
+  ///////////////
+  
+  /**
+   * @brief Set the weapon's unique identifier.
+   * @param id New ID to assign to the weapon.
+   */
+  void setId(uint16_t id);
 
   /**
    * @brief Set the weapon's name.
@@ -62,17 +108,16 @@ public:
    */
   void setHitReps(uint8_t hitReps);
 
+
+  ///////////////
+  /// Methods ///
+  ///////////////
+
   /**
-   * @brief Construct a new Weapon instance.
-   * @param name Weapon name.
-   * @param damage Damage amount.
-   * @param hitChance Hit chance value.
-   * @param hitReps Number of hit repetitions.
+   * @brief Get the type of the weapon (e.g., "Big Gun", "Pistol", "Rifle").
+   * @return std::string Type of the weapon.
    */
-  Weapon(uint16_t id, std::string name, uint16_t damage, uint8_t hitChance, uint8_t hitReps);
-
-  Weapon();
-
+  virtual std::string getType() const;
 };
 
 #endif // !WEAPON_H

@@ -4,13 +4,18 @@
 #include "Enemies/Enemy.h"
 
 /**
- * @brief A basic Ghoul enemy type.
+ * @brief A Ghoul enemy type.
  *
  * Ghoul currently shares Enemy's behavior but may be extended later.
  */
 class Ghoul : public Enemy {
 public:
+  // Inherit Enemy's constructors
   using Enemy::Enemy;
+
+  ///////////////
+  /// Methods ///
+  ///////////////
 
   std::string getType() const override;
 };

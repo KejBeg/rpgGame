@@ -1,28 +1,39 @@
 #include "MainCharacter.h"
-#include "Enemies/Enemy.h"
-#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <vector>
 
-MainCharacter::MainCharacter(std::string name, uint16_t maxHealth,
-                             uint16_t bottlecaps, std::list<Weapon> weaponList)
-    : BaseCharacter(std::move(name), maxHealth, bottlecaps),
-      weaponList(std::move(weaponList)) {}
+////////////////////
+/// Constructors ///
+////////////////////
+MainCharacter::MainCharacter() : BaseCharacter("", 100, 0) {}
 
-const std::list<Weapon> &MainCharacter::getWeaponList() const {
+MainCharacter::MainCharacter(std::string name, uint16_t maxHealth,
+                             uint16_t bottlecaps)
+    : BaseCharacter(std::move(name), maxHealth, bottlecaps) {}
+
+////////////////
+//// Getters ///
+////////////////
+const std::vector<Weapon> &MainCharacter::getWeaponList() const {
   return weaponList;
 }
-std::list<Weapon> &MainCharacter::getWeaponList() { return weaponList; }
+std::vector<Weapon> &MainCharacter::getWeaponList() { return weaponList; }
 
-void MainCharacter::setWeaponList(const std::list<Weapon> &weaponList) {
+///////////////
+/// Setters ///
+///////////////
+void MainCharacter::setWeaponList(const std::vector<Weapon> &weaponList) {
   this->weaponList = weaponList;
 }
 
+///////////////
+/// Methods ///
+///////////////
 bool MainCharacter::isDead() { return this->getHealth() == 0; }
 
-void MainCharacter::defeated(Enemy &enemy) {
+void MainCharacter::defeatedMessage(Enemy &enemy) {
   std::cout << "You have been defeated by the " << enemy.getType() << " "
             << enemy.getName() << "!" << std::endl;
   std::cout << "Game Over!" << std::endl;
@@ -42,11 +53,15 @@ void MainCharacter::attack(Enemy &enemy, const Weapon &weapon,
 
   std::ostringstream ss;
   ss << this->getName() << " attacks " << enemy.getType() << " "
-     << enemy.getName() << " with " << weapon.getName() << " for "
+     << enemy.getName() << " with " << weapon.getType() << " " << weapon.getName() << " for "
      << totalDamage << " damage!" << " " << enemy.getName()
      << " current health: " << enemy.getHealth() << "/" << enemy.getMaxHealth()
      << "." << std::endl;
 
   if (battleLog)
     battleLog->push_back(ss.str());
+}
+
+void MainCharacter::addWeapon(const Weapon &weapon) {
+  weaponList.push_back(weapon);
 }

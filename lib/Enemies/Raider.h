@@ -4,15 +4,18 @@
 #include "Enemies/Enemy.h"
 
 /**
- * @brief A raider enemy type.
+ * @brief A Raider enemy type.
  *
- * Raider currently has no additional members beyond Enemy but exists
- * to allow future specialization.
+ * Raider currently shares Enemy's behavior but may be extended later.
  */
 class Raider : public Enemy {
 public:
-  // Inherit constructors from Enemy and override type getter
+  // Inherit Enemy's constructors
   using Enemy::Enemy;
+
+  ///////////////
+  /// Methods ///
+  ///////////////
 
   std::string getType() const override;
 };

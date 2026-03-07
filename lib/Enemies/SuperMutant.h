@@ -5,16 +5,20 @@
 #include "Enemies/Enemy.h"
 
 /**
- * @brief A stronger variant of Enemy with modified stats/behavior.
+ * @brief A SuperMutant enemy type.
  *
- * SuperMutant currently has no additional members beyond Enemy but exists
- * to allow future specialization.
+ * SuperMutant currently shares Enemy's behavior but may be extended later.
  */
 class SuperMutant : public Enemy {
 public:
-  std::string getType() const override;
-
+  // Inherit Enemy's constructors
   using Enemy::Enemy;
+
+  ///////////////
+  /// Methods ///
+  ///////////////
+
+  std::string getType() const override;
 };
 
 #endif // !SUPERMUTANT_H

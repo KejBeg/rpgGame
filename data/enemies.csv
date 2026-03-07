@@ -1,4 +1,4 @@
 # EnemyType, Name, MaxHealth, BottleCaps
-Raider, Raider, 100, 10
-SuperMutant, Super Mutant, 200, 20
-Ghoul, Ghoul, 150, 15
+Raider,Fiend,100,10
+SuperMutant,Markus,200,20
+Ghoul,Goul,150,15

@@ -11,9 +11,13 @@ class MainCharacter;
 
 class Enemy : public BaseCharacter {
 private:
-  Weapon currentWeapon;
+  const Weapon *currentWeapon = nullptr;
 
 public:
+  ////////////////////
+  /// Constructors ///
+  ////////////////////
+
   /**
    * @brief Construct a new Enemy object with specified attributes.
    * @param name Name of the enemy.
@@ -23,6 +27,11 @@ public:
    * damage.
    */
   Enemy(std::string name, uint16_t maxHealth, uint16_t bottlecaps);
+  
+
+  ///////////////
+  /// Getters ///
+  ///////////////
 
   /**
    * @brief Access the enemy's currently equipped weapon (read-only).
@@ -30,17 +39,23 @@ public:
    */
   const Weapon &getCurrentWeapon() const;
 
+  ///////////////
+  /// Setters ///
+  ///////////////
+
   /**
    * @brief Set the enemy's currently equipped weapon.
    * @param weapon Weapon to assign as the current weapon.
    */
   void setCurrentWeapon(const Weapon &weapon);
 
-  // takeDamage is implemented in BaseCharacter
+  ///////////////
+  /// Methods ///
+  ///////////////
 
   /**
    * @brief Perform an attack against a character.
-   * @param character The character to attack (may be modified).
+   * @param character The character to attack
    */
   void attack(MainCharacter &character,
               std::vector<std::string> *battleLog = nullptr);
@@ -48,10 +63,8 @@ public:
   /**
    * @brief Get the type of the enemy (e.g., "Ghoul", "SuperMutant", "Raider").
    * @return std::string Type of the enemy.
-   *
-   * Make this pure virtual so every concrete enemy must provide a type.
    */
-  virtual std::string getType() const = 0;
+  virtual std::string getType() const;
 };
 
 #endif // !ENEMY_H
