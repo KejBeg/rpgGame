@@ -71,6 +71,8 @@ public:
    */
   Weapon(uint16_t id, std::string name, uint16_t damage, uint8_t hitChance, uint8_t hitReps);
 
+  Weapon();
+
 };
 
 #endif // !WEAPON_H

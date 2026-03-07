@@ -27,18 +27,6 @@
 #define COMBATANT_STATS_WIDTH 30
 
 /**
- * @brief Create a variety of enemies and add them to the provided vector.
- * Each enemy is created with a unique name, health, and bottlecap count.
- * @param allEnemies Reference to a vector that will store unique pointers to
- * the created enemies.
- */
-void createEnemies(std::vector<std::unique_ptr<Enemy>> &allEnemies) {
-  allEnemies.push_back(std::make_unique<Raider>("Fiend", 100, 20));
-  allEnemies.push_back(std::make_unique<Ghoul>("Ghoul", 80, 15));
-  allEnemies.push_back(std::make_unique<SuperMutant>("Super Mutant", 150, 30));
-}
-
-/**
  * @brief Display the stats of both the character and the enemy in a formatted
  * manner.
  * @param character The main character whose stats are to be displayed.
@@ -89,6 +77,78 @@ void DisplayCombatantsStats(const MainCharacter &character,
   std::cout << "\n\n";
 }
 
+/**
+ * @brief Loads enemy data from a specified file and populates a vector with
+ * Enemy objects.
+ * @param filename The path to the enemy data file (CSV format).
+ * @param allEnemies A reference to a vector that will be populated with unique
+ * pointers to Enemy objects.
+ * @return true if the file was successfully loaded and parsed; false otherwise.
+ * The expected format of each line in the file is:
+ * EnemyType, Name, MaxHealth, Bottlecaps
+ * Lines starting with '#' or empty lines are ignored as comments or whitespace.
+ */
+bool loadEnemyFile(const std::string &filename,
+                   std::vector<std::unique_ptr<Enemy>> &allEnemies) {
+  std::ifstream enemyFile(filename);
+  if (!enemyFile.is_open()) {
+    std::cerr << "Error opening enemy file: " << filename << std::endl;
+    return false;
+  }
+
+  // for each line in the file, parse the enemy data and create an Enemy object
+  std::string line;
+  while (std::getline(enemyFile, line)) {
+    if (line.empty())
+      continue;
+    if (line.front() == '#')
+      continue;
+
+    std::istringstream iss(line);
+    std::string token;
+
+    // Expected format: EnemyType, Name, MaxHealth, Bottlecaps
+
+    // Enemy Type
+    if (!std::getline(iss, token, ','))
+      continue;
+    std::string enemyType = token;
+
+    // Name
+    if (!std::getline(iss, token, ','))
+      continue;
+    std::string name = token;
+
+    // Max Health
+    if (!std::getline(iss, token, ','))
+      continue;
+    uint16_t maxHealth = static_cast<uint16_t>(std::stoi(token));
+
+    // Bottlecaps
+    if (!std::getline(iss, token, ','))
+      continue;
+    uint16_t bottlecaps = static_cast<uint16_t>(std::stoi(token));
+
+    // Construct and store the enemy
+    if (enemyType.empty())
+      continue;
+    else if (enemyType == "Ghoul") {
+      allEnemies.push_back(
+          std::make_unique<Ghoul>(name, maxHealth, bottlecaps));
+    } else if (enemyType == "Raider") {
+      allEnemies.push_back(
+          std::make_unique<Raider>(name, maxHealth, bottlecaps));
+    } else if (enemyType == "SuperMutant") {
+      allEnemies.push_back(
+          std::make_unique<SuperMutant>(name, maxHealth, bottlecaps));
+    } else {
+      continue;
+    }
+  }
+
+  return true;
+}
+
 bool loadWeaponFile(const std::string &filename,
                     std::vector<Weapon> &allWeapons) {
   std::ifstream weaponFile(filename);
@@ -108,27 +168,56 @@ bool loadWeaponFile(const std::string &filename,
     std::istringstream iss(line);
     std::string token;
 
+    // Expected format: WeaponType, ID,Name,Damage,HitChance,HitReps
+
+    // Weapon Type
+    if (!std::getline(iss, token, ','))
+      continue;
+    std::string weaponType = token;
+
+    // ID
     if (!std::getline(iss, token, ','))
       continue;
     uint16_t id = static_cast<uint16_t>(std::stoi(token));
 
+    // Name
     if (!std::getline(iss, token, ','))
       continue;
     std::string name = token;
 
+    // Damage
     if (!std::getline(iss, token, ','))
       continue;
     uint16_t damage = static_cast<uint16_t>(std::stoi(token));
 
+    // Hit Chance
     if (!std::getline(iss, token, ','))
       continue;
     uint8_t hitChance = static_cast<uint8_t>(std::stoi(token));
 
+    // Hit Reps
     if (!std::getline(iss, token, ','))
       continue;
     uint8_t hitReps = static_cast<uint8_t>(std::stoi(token));
 
     // Construct and store the weapon
+    Weapon newWeapon;
+    if (weaponType.empty())
+      continue;
+    else if (weaponType == "SmallGun") {
+      newWeapon = SmallGun(id, name, damage, hitChance, hitReps);
+    } else if (weaponType == "BigGun") {
+      newWeapon = BigGun(id, name, damage, hitChance, hitReps);
+    } else if (weaponType == "EnergyWeapon") {
+      newWeapon = EnergyWeapon(id, name, damage, hitChance, hitReps);
+    } else if (weaponType == "MeleeWeapon") {
+      newWeapon = MeleeWeapon(id, name, damage, hitChance, hitReps);
+    } else if (weaponType == "UnarmedWeapon") {
+      newWeapon = UnarmedWeapon(id, name, damage, hitChance, hitReps);
+    } else {
+      continue;
+    }
+
     allWeapons.emplace_back(id, name, damage, hitChance, hitReps);
   }
 
@@ -150,7 +239,7 @@ int main() {
 
   // Enemies
   std::vector<std::unique_ptr<Enemy>> allEnemies;
-  createEnemies(allEnemies);
+  loadEnemyFile("data/enemies.csv", allEnemies);
 
   // For each enemy, get a random weapon
   for (auto &enemy : allEnemies) {
@@ -291,7 +380,7 @@ int main() {
       case 2: {
         currentBattleLog.clear();
         std::ostringstream ss;
-        ss << "You ran away from the " << currentEnemy->getType() << " "
+        ss << "You ran away from the " << currentEnemy->getType() << " named "
            << currentEnemy->getName()
            << "! But you were attacked in the meantime!" << std::endl;
         currentBattleLog.push_back(ss.str());

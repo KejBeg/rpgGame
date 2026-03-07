@@ -1,2 +1,2 @@
-# id, name, damage, hitChance, hitReps
-0,9mm Pistol,10,70,1
+# WeaponType, id, name, damage, hitChance, hitReps
+SmallGun,0,9mm Pistol,10,70,1

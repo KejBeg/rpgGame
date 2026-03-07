@@ -10,6 +10,8 @@ Weapon::Weapon(uint16_t id, std::string name, uint16_t damage, uint8_t hitChance
   this->hitReps = hitReps;
 }
 
+Weapon::Weapon() : id(0), name(""), damage(0), hitChance(0), hitReps(0) {}
+
 std::string Weapon::getName() const { return name; }
 
 uint16_t Weapon::getDamage() const { return damage; }
