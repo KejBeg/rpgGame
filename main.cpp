@@ -1,7 +1,7 @@
-#include "Character.h"
 #include "Enemies/Ghoul.h"
 #include "Enemies/Raider.h"
 #include "Enemies/SuperMutant.h"
+#include "MainCharacter.h"
 #include "Weapons/BigGun.h"
 #include "Weapons/EnergyWeapon.h"
 #include "Weapons/MeleeWeapon.h"
@@ -44,7 +44,8 @@ void createEnemies(std::vector<std::unique_ptr<Enemy>> &allEnemies) {
  * @param character The main character whose stats are to be displayed.
  * @param enemy The enemy whose stats are to be displayed.
  */
-void DisplayCombatantsStats(const Character &character, const Enemy &enemy) {
+void DisplayCombatantsStats(const MainCharacter &character,
+                            const Enemy &enemy) {
   std::cout << "=== Combatants Stats ===" << std::endl;
   // Header
   std::cout << std::left << std::setw(COMBATANT_STATS_WIDTH) << "Character"
@@ -157,8 +158,8 @@ int main() {
   }
 
   // Main character
-  Character mainCharacter =
-      Character("Unknown", 100, 0, {allWeapons[rand() % allWeapons.size()]});
+  MainCharacter mainCharacter = MainCharacter(
+      "Unknown", 100, 0, {allWeapons[rand() % allWeapons.size()]});
 
   // Battle log for the current fight (stores human-readable lines)
   std::vector<std::string> currentBattleLog;
@@ -170,8 +171,7 @@ int main() {
       // Main menu options
       std::cout << "=== Main Menu ===" << std::endl;
       std::cout << "1. New Game" << std::endl;
-      std::cout << "2. Load Game" << std::endl;
-      std::cout << "3. Exit" << std::endl;
+      std::cout << "2. Exit" << std::endl;
       std::cout << "Enter your choice: ";
       std::cin >> menuChoice;
 
@@ -194,22 +194,18 @@ int main() {
         isMenuRunning = false;
         break;
       case 2:
-        // TODO: Implement load game functionality
-        std::cout << "Loading game..." << std::endl;
-        break;
-      case 3:
         // Exit the game
         std::cout << "Exiting game. Goodbye!" << std::endl;
         isMenuRunning = false;
         isRunning = false;
         break;
       default:
-        std::cout << "Invalid choice. Please try again." << std::endl;
         break;
       }
     }
 
-    // pointer to the current enemy; we reselect when it's nullptr or after removal
+    // pointer to the current enemy; we reselect when it's nullptr or after
+    // removal
     Enemy *currentEnemy = nullptr;
 
     while (isGameRunning) {
@@ -243,16 +239,16 @@ int main() {
       std::cout << "Enter your choice: ";
       std::cin >> gameChoice;
 
-        switch (gameChoice) {
-        case 1:
-          mainCharacter.attack(*currentEnemy,
-                               mainCharacter.getWeaponList().front(),
-                               &currentBattleLog);
-          if (currentEnemy->getHealth() == 0) {
-            std::cout << "You defeated the " << currentEnemy->getType() << " "
-                      << currentEnemy->getName() << "!" << std::endl;
+      switch (gameChoice) {
+      case 1:
+        mainCharacter.attack(*currentEnemy,
+                             mainCharacter.getWeaponList().front(),
+                             &currentBattleLog);
+        if (currentEnemy->getHealth() == 0) {
+          std::cout << "You defeated the " << currentEnemy->getType() << " "
+                    << currentEnemy->getName() << "!" << std::endl;
 
-          // Remove enemy from cirtulation
+          // Remove enemy from circulation
           allEnemies.erase(
               std::remove_if(
                   allEnemies.begin(), allEnemies.end(),
@@ -261,50 +257,61 @@ int main() {
                   }),
               allEnemies.end());
 
-           // Choose a new enemy
-           if (allEnemies.empty()) {
-             std::cout << "Congratulations! You have defeated all enemies!"
-                       << std::endl;
+          // Choose a new enemy
+          if (allEnemies.empty()) {
+            std::cout << "Congratulations! You have defeated all enemies!"
+                      << std::endl;
 
             isGameRunning = false;
             isRunning = false;
             break;
-           }
+          }
 
-           currentBattleLog.clear();
+          currentBattleLog.clear();
 
-           // pick a new enemy (reset pointer first to avoid using dangling ptr)
-           if (allEnemies.empty()) {
-             currentEnemy = nullptr;
-           } else {
-             currentEnemy = allEnemies[rand() % allEnemies.size()].get();
-           }
+          // pick a new enemy (reset pointer first to avoid using dangling ptr)
+          if (allEnemies.empty()) {
+            currentEnemy = nullptr;
+          } else {
+            currentEnemy = allEnemies[rand() % allEnemies.size()].get();
+          }
         }
 
-        if (currentEnemy) currentEnemy->attack(mainCharacter, &currentBattleLog);
+        if (currentEnemy)
+          currentEnemy->attack(mainCharacter, &currentBattleLog);
 
         // If the main character is defeated, end the game
-        if (mainCharacter.getHealth() == 0) {
-          if (currentEnemy) {
-            std::cout << "You have been defeated by the " << currentEnemy->getType()
-                      << " " << currentEnemy->getName() << "!" << std::endl;
-          } else {
-            std::cout << "You have been defeated by an enemy!" << std::endl;
-          }
-          std::cout << "Game Over!" << std::endl;
-
+        if (mainCharacter.isDead()) {
+          mainCharacter.defeated(*currentEnemy);
           isGameRunning = false;
           isRunning = false;
         }
 
         break;
-        case 2:
-          break;
-        default:
-          std::cout << "Invalid choice. Please try again." << std::endl;
-          break;
+      case 2: {
+        currentBattleLog.clear();
+        std::ostringstream ss;
+        ss << "You ran away from the " << currentEnemy->getType() << " "
+           << currentEnemy->getName()
+           << "! But you were attacked in the meantime!" << std::endl;
+        currentBattleLog.push_back(ss.str());
+
+        currentEnemy->attack(mainCharacter, &currentBattleLog);
+
+        // If the main character is defeated, end the game
+        if (mainCharacter.isDead()) {
+          mainCharacter.defeated(*currentEnemy);
+          isGameRunning = false;
+          isRunning = false;
         }
 
+        // Select a new enemy to encounter
+        currentEnemy = allEnemies[rand() % allEnemies.size()].get();
+        break;
+      }
+      default:
+        break;
+      }
     }
   }
 

@@ -1,145 +1,141 @@
-AGENTS.md
-=========
+**Agents Guide**
 
-Purpose
-- Short, actionable instructions for agentic editors working on this C++ project.
-- Covers build, run, lint, test commands and a code-style checklist agents must follow.
+- Purpose: provide actionable build/test/lint commands and consistent coding rules for automated agents operating in this repository.
+- Location: repository root — this file is `AGENTS.md`.
 
-Quick repository layout
-- Root-level CMakeLists.txt builds libs from `src/` and headers are in `lib/`.
-- Build output and `compile_commands.json` live in `build/` after running CMake.
-- Executable produced: `build/rpgGame`.
+Build / Run / Test
+- Build (out-of-source, CMake):
 
-Important operational note for agents
-- I (the automated assistant) can create or edit files in this workspace, but I cannot commit changes to git or push to remote. A human must run `git add`/`git commit`/`git push` when they want changes recorded in version control.
+  ```bash
+  mkdir -p build
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+  cmake --build build -- -j$(nproc)
+  ```
 
-Build / run commands
-- Configure (recommended):
-  - `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release`
-- Build:
-  - `cmake --build build -- -j$(nproc)`
-- One-liner quick build:
-  - `cmake -S . -B build && cmake --build build`
-- Clean rebuild:
-  - `rm -rf build && cmake -S . -B build && cmake --build build`
-- Run the executable:
-  - `./build/rpgGame`
-- Alternative using Makefile in build (if present):
-  - `make -C build`
+- Debug build with compile commands (useful for clang-tidy/clangd):
 
-Testing
-- This repository currently has no test targets. Recommended approach: add GoogleTest via CMake and register tests with CTest.
-- Run tests (once configured):
-  - `cd build && ctest --output-on-failure`
-- Run a single test:
-  1. Using ctest by test name or regex:
-     - `cd build && ctest -R TestName -V`
-  2. Using the gtest binary directly:
-     - `./build/tests/my_tests --gtest_filter=MySuite.MyTest`
-- TIP: use `ctest -j<N>` to parallelize test execution.
+  ```bash
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+  cmake --build build
+  ```
 
-Linting & static analysis
-- Ensure `compile_commands.json` exists (CMake: CMAKE_EXPORT_COMPILE_COMMANDS ON).
-- Formatting (clang-format):
-  - Install clang-format (v10+ recommended).
-  - Add a repo `.clang-format` (preferred). If missing, agents should default to LLVM style.
-  - Format changed files before committing: `clang-format -i <files>` or use `git ls-files` pattern: `clang-format -i $(git ls-files '*.h' '*.hpp' '*.cpp')`.
-- Static analysis (clang-tidy):
-  - `run-clang-tidy -p build` or run `clang-tidy file.cpp -- -Ilib -std=c++17` using flags from compile_commands.json.
-- Optional: add cpplint or other linters for additional style checks.
+- Run the program (built executable):
 
-Single-file quick compile
-- To compile and run one file quickly, extract flags from `compile_commands.json` or use:
-  - `clang++ -std=c++17 -Ilib -I. src/foo.cpp -o /tmp/foo && /tmp/foo`
+  ```bash
+  ./build/rpgGame
+  ```
 
-Code style and conventions (required)
-- Language & standard:
-  - C++17 (CMAKE_CXX_STANDARD = 17). Follow portable, idiomatic C++17.
+- Run a single test (CTest):
+
+  Notes: this repo currently has no CTest tests configured. If tests are added with `add_test()` in CMake, use:
+
+  ```bash
+  # run a single test whose name matches the regex 'MyTestName'
+  cd build
+  ctest -R 'MyTestName' --output-on-failure -V
+  ```
+
+  Or run a specific test executable directly (common for new test frameworks):
+
+  ```bash
+  ./build/tests/my_test_executable --gtest_filter=MyTestSuite.MyTest
+  ```
+
+- Run clang-tidy on a single file (requires `compile_commands.json` in `build`):
+
+  ```bash
+  run-clang-tidy-10 -clang-tidy-binary=$(which clang-tidy) -p build src/Character.cpp
+  # or
+  clang-tidy src/Character.cpp -p build --checks='*'
+  ```
+
+- Format a single file with clang-format:
+
+  ```bash
+  clang-format -i src/Character.cpp
+  ```
+
+- Quick static analysis / sanitizers (Debug build):
+
+  ```bash
+  cmake -S . -B build-sanit -DCMAKE_BUILD_TYPE=Debug -DSANITIZE=Address
+  cmake --build build-sanit
+  ./build-sanit/rpgGame
+  ```
+
+Repository / CI notes
+- CMake target names: `Enemies`, `Weapons`, `GameCore`, and executable `rpgGame` (see `CMakeLists.txt`).
+- `compile_commands.json` is produced when `CMAKE_EXPORT_COMPILE_COMMANDS` is ON — many tools depend on it.
+
+Code Style Guidelines (for automated agents)
+- Language: C++17. Default to the standards set in `CMakeLists.txt`.
+
 - Formatting:
-  - Use the repository `.clang-format`. If none exists, use LLVM style.
-  - Always run clang-format on files you change.
-- Indentation:
-  - Honor `.clang-format`. In absence of that, prefer 4 spaces.
-- Includes:
-  - Include only what you use. Prefer forward declarations in headers where possible to reduce compile-time dependencies.
-  - Never put `using namespace std;` in headers. Avoid `using` directives in headers entirely.
-  - In headers prefer explicit `std::` qualifiers (e.g., `std::string`). Small, local `using` in .cpp files is acceptable.
-- Header guards & header style:
-  - For new headers prefer `#pragma once`.
-  - When editing existing files, follow the file's current guard style to avoid churn.
-  - Keep declarations in headers and definitions in .cpp files unless templates or true inline functions.
-  - Header files should contain only declarations/prototypes; put the actual implementations in `.cpp` files (except for templates or intentionally inline functions).
+  - Use clang-format with a project style. If none exists, use LLVM style as baseline: `clang-format -style=llvm`.
+  - Run `clang-format -i` on changed files before pushing.
+
+- Includes ordering and style:
+  - Use quoted includes for project headers: `#include "Character.h"`.
+  - Use angle brackets for system headers: `#include <vector>`.
+  - Order includes: 1) corresponding header (if in .cpp), 2) project headers (sorted), 3) third-party, 4) standard headers (sorted).
+  - Avoid transitive includes in headers; prefer forward declarations when possible.
+
+- Header files:
+  - Use traditional include guards: `#ifndef FOO_H` / `#define FOO_H` / `#endif // FOO_H`.
+  - Keep headers minimal: declare types and inline small functions only; implement in `.cpp` files.
+  - Do not include heavy headers in other headers if forward declaration suffices.
+
 - Naming conventions:
-  - Types (classes, structs, enums): PascalCase (e.g., `Character`, `SuperMutant`).
-  - Functions and variables: camelCase (e.g., `getHealth`, `setBottlecaps`).
-  - Private members in new code: prefer trailing underscore (e.g., `health_`). When editing existing code, prefer minimal disruption; follow local style.
-  - File names: match type names where possible (`Weapon.h`, `Weapon.cpp`).
-  - Constants: SCREAMING_SNAKE_CASE or prefer `enum class` with PascalCase enumerators.
-- Getter / Setter specifics (project preference):
-  - Use full, descriptive variable names in getters/setters (avoid cryptic abbreviations).
-  - Header declarations must use the full parameter name: e.g., `void setBottlecaps(int bottlecaps);`.
-  - In implementations assign with explicit `this->` to disambiguate member from parameter:
-    - `void Character::setBottlecaps(int bottlecaps) { this->bottlecaps = bottlecaps; }`
-  - Return getters as `const T&` where the lifetime guarantees safety; otherwise return by value. Mark getters `const` when appropriate.
-- Types & ownership:
-  - Use value semantics for small POD-like types.
-  - For polymorphic hierarchies avoid storing by value (prevents slicing). Prefer `std::unique_ptr<Base>` or `std::shared_ptr<Base>` for owning containers.
-  - Use smart pointers for ownership; raw pointers are non-owning observers only.
-  - Pass large objects as `const T&` and use `T&&`/std::move for transfers.
-- Const-correctness:
-  - Mark member functions `const` when they do not modify state.
-  - Use `const` parameters when data is not changed.
-- Error handling:
-  - Prefer explicit error signaling: return `bool`, `std::optional<T>`, or error codes for recoverable errors.
-  - Reserve exceptions for truly exceptional conditions and document exception-safety if used.
-  - Document error conditions in public APIs.
-- Logging & IO:
-  - Avoid printing from library code; let `main` or a designated CLI layer handle user-facing output.
-  - Use `std::cerr` for diagnostics in CLI code or a small logging helper.
-- Threading:
-  - Codebase is single-threaded. If adding concurrency, document thread-safety and prefer safe primitives.
-- Tests & assertions:
-  - Use `assert()` for internal invariants during development.
-  - Add unit tests for new features and for any bugfixes.
-- Documentation & comments:
-  - Document class invariants, ownership, and any non-obvious behavior in headers.
-  - Prefer clear naming over excessive comments.
+  - Types (classes/structs/enums): PascalCase (e.g., `Character`, `Enemy`, `Weapon`).
+  - Member variables: `snake_case` or `camelCase` is acceptable; prefer `snake_case` or `m_` prefix if changing codebase-wide is feasible. Current code uses plain `name`, `health` — follow project pattern for edits.
+  - Methods and functions: camelCase (e.g., `getName()`, `setHealth()`). Free functions: lowerCamelCase (e.g., `createEnemies`).
+  - Constants and macros: ALL_CAPS (macros in repo: `CLEAR_COMMAND`, `COMBATANT_STATS_WIDTH`). Prefer `constexpr` or `const` variables in new code instead of macros.
 
-Practical checks & common pitfalls
-- Object slicing: some classes currently store `Weapon` by value. If `Weapon` becomes polymorphic, convert storage to smart pointers.
-- Header/implementation mismatches: double-check const qualifiers and signatures between .h and .cpp.
-- Missing return/typo errors: run a build and clang-tidy after edits — these catches are common.
+- Types and integer widths:
+  - Prefer fixed-width integer types for persistent or serialized data and tight bounds: `uint8_t`, `uint16_t`, `uint32_t`, etc. This repo already uses these — continue doing so.
+  - For general counters or sizes use `size_t` when interacting with containers.
 
-Local verification steps before opening a PR
-1. Build: `cmake -S . -B build && cmake --build build`
-2. Format: run `clang-format -i` on changed files.
-3. Static analysis: run `run-clang-tidy -p build` and triage findings.
-4. Tests: add and run unit tests for new behavior where applicable.
+- Smart pointers / ownership:
+  - Use `std::unique_ptr` for exclusive ownership and `std::shared_ptr` only when shared ownership is explicit. Use raw pointers only for non-owning observers.
+  - Pass objects by const-reference (`const T&`) for read-only parameters; use value semantics when copying is cheap or intended.
 
-Git & commit guidance for agents
-- I can modify files but I cannot create commits or push branches. A human must run:
-  - `git add <files>`
-  - `git commit -m "<short message>"` (title ≤ 72 chars; optional body explaining why)
-  - `git push` (if desired)
-- Commit message format: short title, blank line, 1–3 lines explaining why the change was made.
+- Error handling and logging:
+  - For CLI utilities prefer explicit error returns and `std::cerr` for user-visible errors (matches existing code using `std::cerr` on file open failure).
+  - Use exceptions for unrecoverable library errors only if the exception boundary is well-defined; otherwise, return error codes or `std::optional`/`Expected`-like types.
+  - Always check I/O results (`ifstream.is_open()`, `std::getline()` return) and guard against malformed input. The repo follows this pattern in `loadWeaponFile()` — keep it.
+
+- API / public surface guidance:
+  - Keep interfaces small and explicit. Prefer non-throwing getters returning `const &` where appropriate.
+  - Mark methods `noexcept` only when they are guaranteed not to throw.
+
+- Concurrency / thread-safety:
+  - This project is single-threaded; new multithreading must be documented and use standard concurrency primitives.
+
+- Tests:
+  - Add tests under `tests/` and register with CMake using `enable_testing()` and `add_test()` so `ctest` works.
+  - Prefer linking test executables with `GameCore` and exercise pure logic without user input. Tests should be deterministic.
+
+Repository hygiene for agents
+- When editing files, preserve local style and existing naming unless performing a deliberate refactor across the codebase.
+- Do not modify generated build artifacts under `build/` except for debugging. Prefer editing source under `src/` and `lib/`.
+- Keep commits focused and small; when making multiple unrelated edits, split them into multiple commits/PRs.
 
 Cursor / Copilot rules
-- No `.cursor` or `.cursorrules` files were found in the repo root or subfolders at the time of this scan.
-- No `.github/copilot-instructions.md` file was present.
-- If such files are added later they must be read and followed — they override general guidance in this AGENTS.md when applicable.
+- Cursor rules: none found in repository path `.cursor/` or `.cursorrules`.
+- Copilot rules: no `.github/copilot-instructions.md` file found.
 
-What to do on first edit / PR
-- Make a minimal, focused change per PR.
-- Run build, format and static checks locally.
-- Add unit tests for behavioral changes.
-- Explain the rationale and list verification steps in the PR description.
+Guidance for automated agents (practical checklist)
+1. Run `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` and build.
+2. Run `clang-tidy` (targeted files) using `-p build` to surface issues.
+3. Apply `clang-format -i` to modified files before creating patches.
+4. If adding tests, wire them into CMake (use `add_executable` + `add_test`) so `ctest` can run them and agents can target single tests with `ctest -R`.
+5. Avoid committing binary/build artifacts; update only source, headers, and config.
 
-Suggested follow-ups (helpful to the project)
-1. Add a `.clang-format` file and enforce formatting in CI.
-2. Add a clang-tidy configuration and a CI run for static analysis.
-3. Add a basic GoogleTest harness and one or two unit tests for core interactions (Character vs Enemy).
+If you are blocked
+- If the build fails due to missing SDKs or tools, list the exact error and the command used.
+- If a style decision is ambiguous (naming, header placement), follow the nearest existing file's pattern; if multiple styles exist, prefer the style used by the header you are editing.
 
-Contact & escalation
-- If design intent is unclear (ownership model, lifetime expectations, polymorphic design), open an issue and ask the repository owner before making large refactors.
+Contact / Maintainer notes
+- Maintainers: none listed in-repo. For PRs, add a short description: what changed, why, and how it was validated (build/tests).
 
 End of file.
