@@ -68,6 +68,7 @@ void GameLoop::start() {
         std::cout << "Exiting game. Goodbye!" << std::endl;
         isMenuRunning = false;
         isRunning = false;
+        isGameRunning = false;
         break;
       default:
         break;
